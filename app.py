@@ -2,7 +2,7 @@ import streamlit as st
 import json
 import gspread
 from datetime import datetime
-from google.oauth2.service_account import service_account
+from google.oauth2 import service_account
 from database import create_orders_table, insert_order, get_recent_orders
 from order import load_menu, order
 

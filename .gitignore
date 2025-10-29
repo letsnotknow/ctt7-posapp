@@ -1,2 +1,3 @@
 # Ignore credentials and secret keys
 ctt7-posapp-d2c04659cc7c*.json
+.DS_Store

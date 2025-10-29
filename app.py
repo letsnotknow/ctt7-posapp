@@ -2,14 +2,17 @@ import streamlit as st
 import json
 import gspread
 from datetime import datetime
-from google.oauth2.service_account import Credentials
+from google.oauth2.service_account import service_account
 from database import create_orders_table, insert_order, get_recent_orders
 from order import load_menu, order
 
 
-# --- AUTHENTICATION SETUP ---
-SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = Credentials.from_service_account_file("ctt7-posapp-d2c04659cc7c.json", scopes=SCOPE)
+SCOPE = ["https://www.googleapis.com/auth/spreadsheets"]
+
+creds = service_account.Credentials.from_service_account_info(
+    json.loads(st.secrets["GOOGLE_CREDS"]),
+    scopes=SCOPE
+)
 client = gspread.authorize(creds)
 
 

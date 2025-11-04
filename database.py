@@ -1,58 +1,52 @@
-import psycopg2
 import pandas as pd
-import os
-import json
-import streamlit as st
 from datetime import datetime
+import os
 
-# --- Database connection setup ---
+def get_excel_folder():
+    """Folder to store all Excel order files"""
+    folder = "orders"
+    os.makedirs(folder, exist_ok=True)
+    return folder
 
-def get_connection():
-    """Create and return a PostgreSQL connection using environment variables."""
-    conn = psycopg2.connect(
-        host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT"),
-        dbname=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASS"),
-        sslmode="require"
-    )
-    return conn
+def get_excel_path():
+    """Generate a daily Excel file path inside the folder"""
+    folder = get_excel_folder()
+    today = datetime.now().strftime("%Y-%m-%d")
+    return os.path.join(folder, f"orders_{today}.xlsx")
 
-# --- Database functions ---
 def create_orders_table():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS orders (
-            id SERIAL PRIMARY KEY,
-            timestamp TIMESTAMPTZ DEFAULT NOW(),
-            items TEXT,
-            total NUMERIC,
-            paid NUMERIC,
-            change NUMERIC,
-            payment_method TEXT
-        );
-    """)
-    conn.commit()
-    cur.close()
-    conn.close()
+    """Create today's Excel file if not exists"""
+    path = get_excel_path()
+    if not os.path.exists(path):
+        df = pd.DataFrame(columns=['Thời gian', 'Món', 'Tổng', 'Khách đưa', 'Trả lại', 'Phương thức'])
+        df.to_excel(path, index=False)
+    return path
 
-def insert_order(items, total, paid, change, payment_method):
-    conn = get_connection()
-    cur = conn.cursor()
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    cur.execute("""
-        INSERT INTO orders (timestamp, items, total, paid, change, payment_method)
-        VALUES (%s, %s, %s, %s, %s, %s);
-    """, (timestamp, ", ".join(items), total, paid, change, payment_method))
-    conn.commit()
-    cur.close()
-    conn.close()
+def insert_order(selected, total, paid, change, method):
+    """Append new order to today's Excel file"""
+    path = create_orders_table()
+    df = pd.read_excel(path)
+    time_now = datetime.now().strftime("%H:%M:%S")
+    order_list = ', '.join([f"{item['name']} ({item['qty']})" for item in selected])
+    new_row = {
+        'Thời gian': time_now,
+        'Món': order_list,
+        'Tổng': total,
+        'Khách đưa': paid,
+        'Trả lại': change,
+        'Phương thức': method
+    }
+    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+    df.to_excel(path, index=False)
 
+def get_recent_orders(n=10):
+    """Return the most recent orders for *today only*"""
+    path = get_excel_path()  # Always points to today's file
 
-def get_recent_orders(limit=10):
-    conn = get_connection()
-    df = pd.read_sql(f"SELECT * FROM orders ORDER BY timestamp DESC LIMIT {limit}", conn)
-    conn.close()
-    return df
+    # If today's file doesn't exist, return empty DataFrame
+    if not os.path.exists(path):
+        return pd.DataFrame(columns=['Thời gian', 'Món', 'Tổng', 'Khách đưa', 'Trả lại', 'Phương thức'])
+
+    # Read only today's orders
+    df = pd.read_excel(path)
+    return df.tail(n).iloc[::-1]

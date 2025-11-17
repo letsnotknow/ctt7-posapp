@@ -75,7 +75,7 @@ def payment_input(total):
         paid = st.session_state['cash_given'] + custom
         change = max(paid - total, 0)
 
-        st.write(f"**Tổng tiền khách đưa: {paid:,.0f} VND**")
+        st.subheader(f"**Tổng tiền khách đưa: {paid:,.0f} VND**")
         st.write(f"**Tiền thừa: {change:,.0f} VND**")
 
         st.session_state['transfer_confirmed'] = False

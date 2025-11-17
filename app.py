@@ -16,7 +16,7 @@ menu = load_menu('brekkie.json')
 
 with st.expander('🍳 Menu ăn sáng', expanded=True):
     selected_items, total = order(menu)
-    paid, change, method = payment_input(total)
+    paid, change, method, phone = payment_input(total)
 
 if st.button("Xác nhận thanh toán", use_container_width=True):
     if not selected_items:
@@ -31,15 +31,11 @@ if st.button("Xác nhận thanh toán", use_container_width=True):
             change = max(paid - total, 0)
 
         create_orders_table()
-        insert_order(selected_items, total, paid, change, method)
+        insert_order(selected_items, total, paid, change, method, phone)
         st.success("Thanh toán thành công và đã lưu đơn hàng!")
 
         st.session_state.clear()
         st.rerun()
-
-        # ✅ Re-fetch the updated orders immediately after saving
-        df = get_recent_orders(10)
-        st.rerun()  # optional: refresh instantly
 
 # 👇 Only show recent orders if they exist
 st.subheader('Đơn hàng gần đây')

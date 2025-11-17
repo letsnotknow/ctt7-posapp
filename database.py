@@ -22,22 +22,46 @@ def create_orders_table():
         df.to_excel(path, index=False)
     return path
 
-def insert_order(selected, total, paid, change, method):
-    """Append new order to today's Excel file"""
+def insert_order(selected, total, paid, change, method, phone):
+    """Append a new order to today's Excel file (with phone number)."""
     path = create_orders_table()
     df = pd.read_excel(path)
     time_now = datetime.now().strftime("%H:%M:%S")
-    order_list = ', '.join([f"{item['name']} ({item['qty']})" for item in selected])
-    new_row = {
-        'Thời gian': time_now,
-        'Món': order_list,
-        'Tổng': total,
-        'Khách đưa': paid,
-        'Trả lại': change,
-        'Phương thức': method
-    }
+
+    # List of all dishes in your menu
+    menu_items = [
+        "Bún cá", "Bánh đa cá", "Mỳ tôm trứng", "Mỳ tôm trứng, xúc xích",
+        "Bánh mì sốt vang", "Bún gà", "Miến gà", "Phở gà"
+    ]
+
+    # Initialize all dishes as 0
+    new_row = {dish: 0 for dish in menu_items}
+
+    # Fill in the ordered quantities
+    for item in selected:
+        dish = item["name"]
+        qty = item["qty"]
+        if dish in new_row:
+            new_row[dish] = qty
+
+    # Add metadata fields
+    new_row.update({
+        "Thời gian": time_now,
+        "Tổng": total,
+        "Khách đưa": paid,
+        "Trả lại": change,
+        "Phương thức": method,
+        "Số điện thoại": phone if method == "Chuyển khoản" else ""  # only save for transfers
+    })
+
+    # Define and enforce column order
+    cols = ["Thời gian"] + menu_items + ["Tổng", "Khách đưa", "Trả lại", "Phương thức", "Số điện thoại"]
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+    df = df.reindex(columns=cols)
+
+    # Save to Excel
     df.to_excel(path, index=False)
+
 
 def get_recent_orders(n=10):
     """Return the most recent orders for *today only*"""

@@ -73,7 +73,8 @@ def payment_input(total):
         st.session_state['transfer_confirmed'] = False
 
     else:
-        st.info('Khách chọn phương thức chuyển khoản.\nVui lòng xác nhận khi đã nhận đủ tiền.') 
+        st.info('Khách chọn phương thức chuyển khoản.\nVui lòng xác nhận khi đã nhận đủ tiền.')
+        phone = st.text_input('Nhập số tiền chuyển khoản:', placeholder="VD: 0912345678")
         if not st.session_state['transfer_confirmed']:
             if st.button("Xác nhận đã nhận chuyển khoản"):
                 st.session_state['transfer_confirmed'] = True
@@ -85,6 +86,6 @@ def payment_input(total):
             paid = total
             change = 0
 
-    return paid, change, method
+    return paid, change, method, phone
 
     

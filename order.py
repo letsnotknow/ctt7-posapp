@@ -37,17 +37,28 @@ def payment_input(total):
     """Handle payment input and method selection"""
     st.subheader('Thanh toán')
     st.write('Chọn phương thức thanh toán')
-    method = st.radio("Phương thức thanh toán:", ['Tiền mặt', 'Chuyển khoản'], horizontal=True)
+    method = st.radio(
+        "Phương thức thanh toán:",
+        ['Tiền mặt', 'Chuyển khoản'],
+        horizontal=True
+    )
 
+    # ✅ initialize all state vars safely
     if 'transfer_confirmed' not in st.session_state:
         st.session_state['transfer_confirmed'] = False
     if 'cash_given' not in st.session_state:
-        st.session_state.cash_given = 0
+        st.session_state['cash_given'] = 0
+    if 'reset_id' not in st.session_state:
+        st.session_state['reset_id'] = 0
 
+    # ✅ initialize all local vars before any branch
     paid = 0
     change = 0
-    phone = ""  # default empty for cash orders
+    phone = ""
 
+    # ---------------------------------------------------------------------
+    # 💵 CASH
+    # ---------------------------------------------------------------------
     if method == 'Tiền mặt':
         st.write('Chọn số tiền khách đưa:')
         col1, col2, col3, col4 = st.columns(4)
@@ -55,13 +66,13 @@ def payment_input(total):
 
         for col, val in zip([col1, col2, col3, col4], presets):
             if col.button(f"+{val:,} VND"):
-                st.session_state.cash_given += val
+                st.session_state['cash_given'] += val
 
         if st.button("🔁 Reset số tiền"):
-            st.session_state.cash_given = 0
+            st.session_state['cash_given'] = 0
 
         custom = st.number_input("Hoặc nhập thêm thủ công:", min_value=0, step=10000)
-        paid = st.session_state.cash_given + custom
+        paid = st.session_state['cash_given'] + custom
         change = max(paid - total, 0)
 
         st.write(f"**Tổng tiền khách đưa: {paid:,.0f} VND**")
@@ -69,6 +80,9 @@ def payment_input(total):
 
         st.session_state['transfer_confirmed'] = False
 
+    # ---------------------------------------------------------------------
+    # 💳 BANK TRANSFER
+    # ---------------------------------------------------------------------
     else:
         st.info('Khách chọn phương thức chuyển khoản.\nVui lòng xác nhận khi đã nhận đủ tiền.')
         st.subheader(f'Số tiền cần chuyển khoản: {total:,.0f} VND')
@@ -80,7 +94,6 @@ def payment_input(total):
             key=f"customer_phone_{reset_key}",
             placeholder="VD: 0912345678"
         )
-
 
         if phone and (not phone.isdigit() or len(phone) != 10):
             st.warning("⚠️ Số điện thoại phải có đúng 10 chữ số.")
@@ -96,4 +109,6 @@ def payment_input(total):
             paid = total
             change = 0
 
+    # ---------------------------------------------------------------------
     return paid, change, method, phone
+
